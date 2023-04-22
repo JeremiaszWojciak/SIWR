@@ -1,7 +1,6 @@
 from pgmpy.models import BayesianNetwork
 from pgmpy.factors.discrete import TabularCPD
 from pgmpy.inference import VariableElimination
-from pgmpy.models import MarkovChain as MC
 
 
 def zad_3():
@@ -64,7 +63,8 @@ def zad_3():
     b = dentist_infer.query(['Toothache', 'Catch'])
     print('P(Cavity | Toothache, Catch) =\n', a/b)
 
-    # TODO 3.3 state_names added in TabularCPD()
+    # TODO 3.3
+    # state_names added in TabularCPD()
 
 
 def zad_4():
@@ -144,20 +144,41 @@ def zad_4():
     # TODO 4,7
     # Potrzeba 32 wartości do zapisania całej tabeli CPD dla Starts.
 
+
 def zad_5():
-    # weather_model = MC()
-    # weather_model.add_variables_from(['Rain', 'Umbrella'], [2, 2])
-    #
-    # rain_tm = {0: {0: 0.7, 1: 0.3}, 1: {0: 0.3, 1: 0.7}}
-    # weather_model.add_transition_model('Rain', rain_tm)
-    # umbrella_tm = {0: {0: 0.8, 1: 0.1}, 1: {0: 0.2, 1: 0.9}}
-    # weather_model.add_transition_model('Umbrella', umbrella_tm)
-    #
-    # from pgmpy.factors.discrete import State
-    # weather_model.set_start_state([State('Rain', 0), State('Umbrella', 2)])
-    #
-    # weather_model.sample(size=5)
+
+    # TODO 5.1 AND 5.2 AND 5.3
+
+    weather_model = BayesianNetwork([('R_0', 'R_1'),
+                                     ('R_1', 'U_1')])
+    cpd_r0 = TabularCPD('R_0', 2, [[0.6], [0.4]],
+                        state_names={'R_0': [True, False]})
+    cpd_r1 = TabularCPD('R_1', 2, [[0.7, 0.3],
+                                   [0.3, 0.7]],
+                        evidence=['R_0'], evidence_card=[2],
+                        state_names={'R_0': [True, False], 'R_1': [True, False]})
+    cpd_u1 = TabularCPD('U_1', 2, [[0.9, 0.2],
+                                   [0.1, 0.8]],
+                        evidence=['R_1'], evidence_card=[2],
+                        state_names={'R_1': [True, False], 'U_1': [True, False]})
+
+    weather_model.add_cpds(cpd_r0, cpd_r1, cpd_u1)
+    weather_infer = VariableElimination(weather_model)
+
+    ev = [True, True, False, True, True]
+    res = []
+    for i in range(9):
+        if i < 5:
+            q = weather_infer.query(['R_1'], evidence={'U_1': ev[i]})
+        else:
+            q = weather_infer.query(['R_1'])
+        res.append(round(q.values[0], 4))
+        cpd_r0 = TabularCPD('R_0', 2, [[q.values[0]], [q.values[1]]],
+                            state_names={'R_0': [True, False]})
+        weather_model.add_cpds(cpd_r0)
+
+    print('Result: ', res)
+
 
 if __name__ == '__main__':
     zad_5()
-
